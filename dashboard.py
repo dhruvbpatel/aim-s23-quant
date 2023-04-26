@@ -147,9 +147,29 @@ def main():
 
 
         # Plot the stock chart
-        fig = px.line(data, x="Date", y="Close",
-                      title=f"{selected_stock} ({DOW_JONES_STOCKS[selected_stock]}) - Past 2 Year")
+        # fig = px.line(data, x="Date", y="Close",
+        #               title=f"{selected_stock} ({DOW_JONES_STOCKS[selected_stock]}) - Past 2 Year")
+        # st.plotly_chart(fig, use_container_width=True)
+    
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['Close'][60:], name='Close'))
+    
+
+        if st.button("show moving average"):
+            data['SMA50'] = data['Close'].rolling(window=15).mean()
+            data['SMA200'] = data['Close'].rolling(window=60).mean()
+            # fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['Close'][60:], name='Close'))
+            fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['SMA50'][60:], name='SMA15'))
+            fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['SMA200'][60:], name='SMA60'))
+        
+
+
+        fig.update_layout(title=f"{selected_stock} ({DOW_JONES_STOCKS[selected_stock]}) - Past 2 Years",
+                      xaxis_title="Date",
+                      yaxis_title="Price")
         st.plotly_chart(fig, use_container_width=True)
+
+
 
     elif choice == "Portfolio Optimization":
 
