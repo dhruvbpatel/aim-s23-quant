@@ -21,11 +21,23 @@ from pypfopt import HRPOpt
 import datetime
 
 
+import plotly.graph_objects as go
+import plotly.express as px
+
+
+global path
+path = 'data/dji.csv'
+
 # Get stock data from Yahoo Finance API
+
 def get_data(tickers):
-    stock_data = yf.download(tickers=tickers, period="max")
-    stock_data = stock_data.dropna()
-    return stock_data
+    df = pd.read_csv(path)
+    df = df.dropna()
+    return df
+    # stock_data = yf.download(tickers=tickers, period="max")
+    # stock_data = stock_data.dropna()
+    # return stock_data
+
 
 
 def get_stock(ticker, start, end):
@@ -127,13 +139,16 @@ def main():
             DOW_JONES_STOCKS.keys()), format_func=lambda x: f"{x} ({DOW_JONES_STOCKS[x]})")
 
         # Get the stock data for the past 1 year
-        end_date = datetime.now()
+        end_date = datetime.datetime.now()
         start_date = end_date - timedelta(days=365)
-        data = yf.download(selected_stock, start=start_date, end=end_date)
+        # data = yf.download(selected_stock, start=start_date, end=end_date)
+        data = pd.read_csv(path)
+        data = data = data[data['Ticker']==selected_stock]
+
 
         # Plot the stock chart
-        fig = px.line(data, x=data.index, y="Close",
-                      title=f"{selected_stock} ({DOW_JONES_STOCKS[selected_stock]}) - Past 1 Year")
+        fig = px.line(data, x="Date", y="Close",
+                      title=f"{selected_stock} ({DOW_JONES_STOCKS[selected_stock]}) - Past 2 Year")
         st.plotly_chart(fig, use_container_width=True)
 
     elif choice == "Portfolio Optimization":
