@@ -309,6 +309,7 @@ def main():
                       xaxis_title="Date",
                       yaxis_title="Price")
         st.plotly_chart(fig, use_container_width=True)
+        st.write("Stock Predictions for next 60 days based on our custom LSTM Model using data for past 2 years.")
 
 
     elif choice == "Portfolio Optimization":
