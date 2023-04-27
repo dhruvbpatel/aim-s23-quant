@@ -326,7 +326,7 @@ def main():
             "Select your stocks", DOW_JONES_STOCKS.keys())
         st.write(selected_stocks)
 
-        if st.button("Optimize Portfolio"):
+        if st.button("Get Portfolio Recommendations"):
             portfolio = combine_stocks(selected_stocks, start, end)
             # st.dataframe(portfolio)
 
@@ -336,7 +336,17 @@ def main():
             weights = ef.max_sharpe()
             cleaned_weights = ef.clean_weights()
 
-            ef.portfolio_performance(verbose=True) 
+            rec_df = ef.portfolio_performance(verbose=True)
+
+            ans_dict = {
+                "% Expected Returns": rec_df[0]*100,
+                "% Annual Volatility":rec_df[1]*100,
+                "Sharp Ratio":rec_df[2].round(2)
+            }
+
+            st.write("Recommendations and Insights: ")
+            st.write(ans_dict)  
+            (ef.portfolio_performance(verbose=True))
 
                         
             # latest_prices = get_latest_prices(portfolio)
