@@ -205,3 +205,4 @@ wordcloud==1.8.2.2
 wrapt==1.14.1
 yfinance==0.2.18
 zipp==3.8.0
+pandas-ta
