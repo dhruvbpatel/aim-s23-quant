@@ -24,6 +24,16 @@ import datetime
 import plotly.graph_objects as go
 import plotly.express as px
 
+import yfinance as yf
+import pandas as pd
+import datetime
+import numpy as np
+import tensorflow as tf
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense, LSTM
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
 
 global path
 path = 'data/dji.csv'
@@ -39,6 +49,24 @@ def get_data(tickers):
     # return stock_data
 
 
+# Function to create a dataset with a look_back window
+def create_dataset(dataset, look_back=1):
+    dataX, dataY = [], []
+    for i in range(len(dataset) - look_back - 1):
+        a = dataset[i:(i + look_back), 0]
+        dataX.append(a)
+        dataY.append(dataset[i + look_back, 0])
+    return np.array(dataX), np.array(dataY)
+
+# Function to convert a windowed DataFrame to separate date, X, and y arrays
+def windowed_df_to_date_X_y(windowed_dataframe):
+    df_as_np = windowed_dataframe.to_numpy()
+
+    dates = df_as_np[:, 0]
+    X = df_as_np[:, 1:-1]
+    y = df_as_np[:, -1]
+
+    return dates, X, y
 
 def get_stock(ticker, start, end):
     print(ticker)
@@ -169,6 +197,80 @@ def main():
                       yaxis_title="Price")
         st.plotly_chart(fig, use_container_width=True)
 
+
+    elif choice == "Predictions":
+        st.subheader("Predictions")
+        selected_stock = st.selectbox("Select a Dow Jones stock", list(
+            DOW_JONES_STOCKS.keys()), format_func=lambda x: f"{x} ({DOW_JONES_STOCKS[x]})")
+
+        # Get the stock data for the past 1 year
+        end_date = datetime.datetime.now()
+        start_date = end_date - timedelta(days=365)
+        # data = yf.download(selected_stock, start=start_date, end=end_date)
+        test_data = pd.read_csv(path)
+
+        
+        test_data = test_data[test_data['Ticker']==selected_stock]
+        all_test_data = test_data.copy()
+
+        
+
+        # Load the trained model
+        model_path ="./models/"+str(selected_stock)+"_lstm_model.h5"
+        model = tf.keras.models.load_model(model_path)
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        look_back = 10
+
+        test_data['Close'] = scaler.fit_transform(test_data['Close'].values.reshape(-1, 1))
+        test_data = test_data[['Close']].copy()
+        test_data = pd.concat([test_data.shift(look_back - i) for i in range(look_back + 1)], axis=1)
+        test_data = test_data.dropna()
+        test_dates, test_X, test_y = windowed_df_to_date_X_y(test_data)
+        test_X = np.reshape(test_X, (test_X.shape[0], 1, test_X.shape[1]))
+
+        # Make predictions
+        testPredict = model.predict(test_X)
+        testPredict = scaler.inverse_transform(testPredict)
+        test_y = scaler.inverse_transform(test_y.reshape(-1, 1))
+
+        # Evaluate the model
+        testScore = np.sqrt(mean_squared_error(test_y, testPredict[:, 0]))
+        print(f"AAPL Test Score: {testScore:.2f} RMSE")
+        
+
+        data = all_test_data.copy()
+        train = data[10:]
+        validation = data[10:]
+        validation['Predictions'] = testPredict[:,0][:479]
+
+
+        # Plot the stock chart
+        # fig = px.line(data, x="Date", y="Close",
+        #               title=f"{selected_stock} ({DOW_JONES_STOCKS[selected_stock]}) - Past 2 Year")
+        # st.plotly_chart(fig, use_container_width=True)
+
+        days = 60
+        days*=-1
+        fig = go.Figure()
+        
+        fig.add_trace(go.Scatter(x=train['Date'][:days], y=train['Close'][:days], name='train'))
+        fig.add_trace(go.Scatter(x=train['Date'][days:], y=validation['Predictions'][days:], name='Predictions'))
+
+    
+
+        # if st.button("show moving average"):
+        #     data['SMA50'] = data['Close'].rolling(window=15).mean()
+        #     data['SMA200'] = data['Close'].rolling(window=60).mean()
+        #     # fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['Close'][60:], name='Close'))
+        #     fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['SMA50'][60:], name='SMA15'))
+        #     fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['SMA200'][60:], name='SMA60'))
+        
+
+
+        fig.update_layout(title=f"{selected_stock} ({DOW_JONES_STOCKS[selected_stock]})",
+                      xaxis_title="Date",
+                      yaxis_title="Price")
+        st.plotly_chart(fig, use_container_width=True)
 
 
     elif choice == "Portfolio Optimization":
