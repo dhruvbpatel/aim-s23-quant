@@ -34,6 +34,7 @@ import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
+import pandas_ta as ta
 
 global path
 path = 'data/dji.csv'
@@ -173,6 +174,17 @@ def main():
         data = pd.read_csv(path)
         data = data = data[data['Ticker']==selected_stock]
 
+        data.ta.sma(length=20, append=True)
+        data.ta.rsi(length=14, append=True)
+        data.ta.bbands(length=20, std=2, append=True)
+
+
+        df = data.copy()
+
+
+
+
+
 
         # Plot the stock chart
         # fig = px.line(data, x="Date", y="Close",
@@ -184,13 +196,39 @@ def main():
     
 
         if st.button("show moving average"):
+            
             data['SMA50'] = data['Close'].rolling(window=15).mean()
             data['SMA200'] = data['Close'].rolling(window=60).mean()
             # fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['Close'][60:], name='Close'))
             fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['SMA50'][60:], name='SMA15'))
             fig.add_trace(go.Scatter(x=data['Date'][60:], y=data['SMA200'][60:], name='SMA60'))
+                        
+
         
 
+        if st.button("show Candlestick"):
+                        # Add the candlestick chart
+            fig = go.Figure()
+
+            fig.add_trace(go.Candlestick(x=df['Date'], open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Candlestick'))
+        
+        if st.button("RSI Line"):
+
+            # # Add the moving average line
+            # fig.add_trace(go.Scatter(x=df.index, y=df['SMA_20'], mode='lines', name='MA20'))
+            fig = go.Figure()
+            # # Add the RSI line
+            fig.add_trace(go.Scatter(x=df['Date'], y=df['RSI_14'], mode='lines', name='RSI'))
+
+            st.write('Note: Traders who are looking for investment opportunities should look for RSI values that hit 30 or fall below that level')
+            st.markdown("[More Info on RSI](https://www.investopedia.com/articles/active-trading/042114/overbought-or-oversold-use-relative-strength-index-find-out.asp#:~:text=What%20Is%20a%20Good%20RSI,may%20increase%20in%20the%20future.)")
+            # # Add the Bollinger Bands
+            # fig.add_trace(go.Scatter(x=df.index, y=df['BBL_20'], mode='lines', line=dict(width=0), fillcolor='rgba(255, 0, 0, 0.2)', fill='tonexty', name='Bollinger Bands'))
+            # fig.add_trace(go.Scatter(x=df.index, y=df['BBM_20'], mode='lines', name=''))
+            # fig.add_trace(go.Scatter(x=df.index, y=df['BBU_20'], mode='lines', line=dict(width=0), fillcolor='rgba(0, 255, 0, 0.2)', fill='tonexty', name=''))
+
+        st.markdown("[More Info on Moving Average](https://www.investopedia.com/articles/active-trading/052014/how-use-moving-average-buy-stocks.asp)")
+            
 
         fig.update_layout(title=f"{selected_stock} ({DOW_JONES_STOCKS[selected_stock]}) - Past 2 Years",
                       xaxis_title="Date",
