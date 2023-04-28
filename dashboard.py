@@ -273,6 +273,7 @@ def main():
 
         # Evaluate the model
         testScore = np.sqrt(mean_squared_error(test_y, testPredict[:, 0]))
+        st.write("RMSE",testScore)
         print(f"AAPL Test Score: {testScore:.2f} RMSE")
         
 
@@ -348,6 +349,10 @@ def main():
             st.write("Recommendations and Insights: ")
             st.write(ans_dict)  
             (ef.portfolio_performance(verbose=True))
+
+            st.write("The Sharpe ratio compares the return of an investment with its risk. It's a mathematical expression of the insight that excess returns over a period of time may signify more volatility and risk, rather than investing skill.")
+            st.markdown("**The greater a portfolio's Sharpe ratio, the better its risk-adjusted performance.**")
+            st.markdown("[More Info on Sharpe Ratio ](https://www.investopedia.com/terms/s/sharperatio.asp)")
 
                         
             # latest_prices = get_latest_prices(portfolio)
